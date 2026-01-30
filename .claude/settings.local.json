@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(pnpm add:*)"
     ]
   }
 }
