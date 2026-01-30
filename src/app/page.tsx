@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { useControls, folder } from "leva"
+import PageHeader from "@/components/page-header"
 
 // Dynamically import the canvas component to avoid SSR issues with Three.js
 const WaterDistortionCanvas = dynamic(
@@ -12,7 +13,7 @@ const WaterDistortionCanvas = dynamic(
 const images = ["/art-2.jpg", "/art-7.png", "/art-1.png"]
 
 export default function Home() {
-  const settings = useControls({
+  const settings = useControls("Water Distortion", {
     Ripple: folder({
       intensity: { value: 0.24, min: 0, max: 1, step: 0.01 },
       scale: { value: 0.03, min: 0.005, max: 0.1, step: 0.001 },
@@ -34,19 +35,11 @@ export default function Home() {
       <WaterDistortionCanvas images={images} settings={settings} />
 
       {/* Overlay UI */}
-      <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between py-10">
-        <header className="text-center">
-          <h1 className="text-3xl md:text-4xl font-semibold text-white tracking-tight">
-            Water Ripple Distortion
-          </h1>
-          <p className="mt-2 text-white/50 text-sm">
-            Move your cursor over the images
-          </p>
-        </header>
-
-        <footer className="text-white/30 text-xs">
-          WebGL Shader Effect
-        </footer>
+      <div className="absolute inset-0 pointer-events-none flex flex-col items-center">
+        <PageHeader
+          title="Water Ripple Distortion"
+          subtitle="Move your cursor over the images"
+        />
       </div>
     </main>
   )

@@ -8,7 +8,6 @@ import * as THREE from "three"
 // SHADERS FOR FLUID SIMULATION (PING-PONG)
 // ============================================
 
-// Vertex shader for fullscreen quad
 const quadVertexShader = `
   varying vec2 vUv;
   void main() {
@@ -17,7 +16,7 @@ const quadVertexShader = `
   }
 `
 
-// Fragment shader for fluid simulation with ripple injection
+// Fluid simulation with ripple injection
 const fluidUpdateShader = `
   uniform sampler2D uPrevState;
   uniform sampler2D uCurrentState;
@@ -37,7 +36,6 @@ const fluidUpdateShader = `
   void main() {
     vec2 texel = 1.0 / uResolution;
 
-    // Sample neighboring pixels for wave propagation
     float current = texture2D(uCurrentState, vUv).r;
     float prev = texture2D(uPrevState, vUv).r;
 
@@ -57,11 +55,10 @@ const fluidUpdateShader = `
       vec2 mousePos = uMouse;
       float dist = distance(vUv, mousePos);
 
-      // Create soft circular ripple
       float ripple = smoothstep(uRadius, 0.0, dist);
       ripple = pow(ripple, 2.0);
 
-      // Trail effect - sample along path from prev to current mouse
+      // Trail effect
       vec2 prevMousePos = uPrevMouse;
       for(float i = 0.0; i < 8.0; i++) {
         float t = i / 8.0;
@@ -71,7 +68,6 @@ const fluidUpdateShader = `
         ripple = max(ripple, pow(trailRipple, 2.0));
       }
 
-      // Add ripple with velocity-based intensity
       float finalRipple = ripple * uIntensity * min(uMouseVelocity * 10.0, 1.0);
       wave += finalRipple;
     }
@@ -81,37 +77,33 @@ const fluidUpdateShader = `
 `
 
 // ============================================
-// SHADERS FOR IMAGE RENDERING WITH WATER EFFECT
+// SHADER FOR LIQUID MASK REVEAL
 // ============================================
 
-const imageVertexShader = `
+const maskVertexShader = `
   varying vec2 vUv;
-  varying vec2 vScreenUv;
-  uniform vec2 uViewportSize;
 
   void main() {
     vUv = uv;
-
-    vec4 worldPos = modelMatrix * vec4(position, 1.0);
-    vScreenUv = (worldPos.xy + uViewportSize * 0.5) / uViewportSize;
-
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `
 
-const imageFragmentShader = `
-  uniform sampler2D uTexture;
+const maskFragmentShader = `
+  uniform sampler2D uBaseTexture;
+  uniform sampler2D uRevealTexture;
   uniform sampler2D uDisplacement;
   uniform float uDistortionStrength;
-  uniform float uAberration;
+  uniform float uRevealSize;
+  uniform float uEdgeSoftness;
   uniform float uLightIntensity;
   uniform float uSpecularPower;
   uniform vec2 uResolution;
-  uniform float uImageAspect;
+  uniform float uBaseImageAspect;
+  uniform float uRevealImageAspect;
   uniform float uPlaneAspect;
 
   varying vec2 vUv;
-  varying vec2 vScreenUv;
 
   // Cover fit - maintains aspect ratio while filling the plane
   vec2 coverUv(vec2 uv, float imageAspect, float planeAspect) {
@@ -142,39 +134,39 @@ const imageFragmentShader = `
   }
 
   void main() {
-    // Apply aspect ratio correction (cover fit)
-    vec2 coveredUv = coverUv(vUv, uImageAspect, uPlaneAspect);
+    // Get displacement value for mask
+    float displacement = texture2D(uDisplacement, vUv).r;
 
-    // Get displacement value
-    float displacement = texture2D(uDisplacement, vScreenUv).r;
-
-    // Calculate normal for lighting and refraction
-    vec3 normal = calculateNormal(vScreenUv, 50.0);
-
-    // Calculate how much the normal deviates from flat (used to mask lighting)
+    // Calculate normal for distortion and lighting
+    vec3 normal = calculateNormal(vUv, 50.0);
     float normalDeviation = length(normal.xy);
 
-    // Refraction-based distortion using normal
-    vec2 refraction = normal.xy * uDistortionStrength;
-    vec2 distortedUv = coveredUv + refraction;
+    // Liquid distortion offset
+    vec2 distortion = normal.xy * uDistortionStrength;
+
+    // Apply aspect ratio correction
+    vec2 baseUv = coverUv(vUv + distortion, uBaseImageAspect, uPlaneAspect);
+    vec2 revealUv = coverUv(vUv + distortion, uRevealImageAspect, uPlaneAspect);
 
     // Clamp UVs
-    distortedUv = clamp(distortedUv, 0.001, 0.999);
+    baseUv = clamp(baseUv, 0.001, 0.999);
+    revealUv = clamp(revealUv, 0.001, 0.999);
 
-    // Chromatic aberration based on displacement
-    float aberrationAmount = uAberration * (abs(normal.x) + abs(normal.y));
+    // Sample both textures
+    vec4 baseColor = texture2D(uBaseTexture, baseUv);
+    vec4 revealColor = texture2D(uRevealTexture, revealUv);
 
-    vec4 colorR = texture2D(uTexture, distortedUv + vec2(aberrationAmount, 0.0));
-    vec4 colorG = texture2D(uTexture, distortedUv);
-    vec4 colorB = texture2D(uTexture, distortedUv - vec2(aberrationAmount, 0.0));
+    // Create mask from displacement with adjustable size and softness
+    float mask = displacement * uRevealSize;
+    mask = smoothstep(0.0, uEdgeSoftness, mask);
+    mask = clamp(mask, 0.0, 1.0);
 
-    vec3 color = vec3(colorR.r, colorG.g, colorB.b);
+    // Mix between base and reveal based on mask
+    vec3 color = mix(baseColor.rgb, revealColor.rgb, mask);
 
-    // Only apply lighting where there are actual ripples (normal deviation > 0)
-    // Use smoothstep to create a soft threshold
+    // Add liquid highlights only on the distorted areas
     float rippleMask = smoothstep(0.01, 0.1, normalDeviation);
 
-    // Specular lighting (water highlights) - only on ripples
     vec3 lightDir = normalize(vec3(0.5, 0.5, 1.0));
     vec3 viewDir = vec3(0.0, 0.0, 1.0);
     vec3 halfDir = normalize(lightDir + viewDir);
@@ -182,12 +174,11 @@ const imageFragmentShader = `
     float specular = pow(max(dot(normal, halfDir), 0.0), uSpecularPower);
     specular *= uLightIntensity * rippleMask;
 
-    // Add specular highlight only on ripples
     color += vec3(specular);
 
-    // Subtle fresnel effect - only on ripples
+    // Fresnel edge glow
     float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 2.0);
-    color += vec3(fresnel * uLightIntensity * 0.1 * rippleMask);
+    color += vec3(fresnel * uLightIntensity * 0.15 * rippleMask);
 
     gl_FragColor = vec4(color, 1.0);
   }
@@ -197,13 +188,14 @@ const imageFragmentShader = `
 // EFFECT SETTINGS INTERFACE
 // ============================================
 
-interface EffectSettings {
+export interface MaskCursorSettings {
   intensity: number
   scale: number
   viscosity: number
   decay: number
   distortionStrength: number
-  aberration: number
+  revealSize: number
+  edgeSoftness: number
   lightIntensity: number
   specularPower: number
 }
@@ -212,22 +204,23 @@ interface EffectSettings {
 // MAIN COMPONENT
 // ============================================
 
-export function RippleEffect({
-  images,
+export function MaskCursorEffect({
+  baseImage,
+  revealImage,
   settings
 }: {
-  images: string[]
-  settings: EffectSettings
+  baseImage: string
+  revealImage: string
+  settings: MaskCursorSettings
 }) {
   const { gl, viewport, size } = useThree()
   const mouseRef = useRef({ x: 0.5, y: 0.5 })
   const prevMouseRef = useRef({ x: 0.5, y: 0.5 })
   const mouseVelocityRef = useRef(0)
 
-  // Resolution for fluid simulation
   const RESOLUTION = 512
 
-  // Ping-pong render targets for fluid simulation
+  // Ping-pong render targets
   const renderTargets = useMemo(() => {
     const options = {
       minFilter: THREE.LinearFilter,
@@ -242,23 +235,17 @@ export function RippleEffect({
     ]
   }, [])
 
-  // Index for ping-pong
   const pingPongRef = useRef(0)
 
-  // Fullscreen quad for fluid simulation
-  const quadGeometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(2, 2)
-    return geo
-  }, [])
-
-  // Scene and camera for off-screen rendering
+  // Offscreen scene for fluid simulation
+  const quadGeometry = useMemo(() => new THREE.PlaneGeometry(2, 2), [])
   const offscreenScene = useMemo(() => new THREE.Scene(), [])
   const offscreenCamera = useMemo(() => {
     const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
     return cam
   }, [])
 
-  // Material for fluid update (includes ripple injection)
+  // Fluid update material
   const fluidUpdateMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       vertexShader: quadVertexShader,
@@ -269,7 +256,6 @@ export function RippleEffect({
         uResolution: { value: new THREE.Vector2(RESOLUTION, RESOLUTION) },
         uViscosity: { value: settings.viscosity },
         uDecay: { value: settings.decay },
-        // Ripple uniforms
         uMouse: { value: new THREE.Vector2(0.5, 0.5) },
         uPrevMouse: { value: new THREE.Vector2(0.5, 0.5) },
         uRadius: { value: settings.scale },
@@ -279,7 +265,6 @@ export function RippleEffect({
     })
   }, [])
 
-  // Quad mesh reference
   const quadMeshRef = useRef<THREE.Mesh | null>(null)
 
   // Clear render targets on mount to avoid residual data from previous effects
@@ -291,7 +276,6 @@ export function RippleEffect({
     gl.setRenderTarget(null)
   }, [gl, renderTargets])
 
-  // Setup quad mesh
   useEffect(() => {
     const mesh = new THREE.Mesh(quadGeometry, fluidUpdateMaterial)
     quadMeshRef.current = mesh
@@ -303,49 +287,53 @@ export function RippleEffect({
   }, [quadGeometry, fluidUpdateMaterial, offscreenScene])
 
   // Track image aspect ratios
-  const imageAspectsRef = useRef<number[]>(images.map(() => 1))
+  const baseImageAspectRef = useRef(1)
+  const revealImageAspectRef = useRef(1)
 
-  // Load textures and get their aspect ratios
+  // Load textures
   const textures = useMemo(() => {
     const loader = new THREE.TextureLoader()
-    return images.map((src, index) => {
-      const tex = loader.load(src, (loadedTex) => {
-        // Get image dimensions when loaded
-        const image = loadedTex.image as HTMLImageElement
-        if (image) {
-          imageAspectsRef.current[index] = image.naturalWidth / image.naturalHeight
-        }
-      })
-      tex.minFilter = THREE.LinearFilter
-      tex.magFilter = THREE.LinearFilter
-      return tex
+
+    const baseTex = loader.load(baseImage, (tex) => {
+      const img = tex.image as HTMLImageElement
+      if (img) baseImageAspectRef.current = img.naturalWidth / img.naturalHeight
     })
-  }, [images])
+    baseTex.minFilter = THREE.LinearFilter
+    baseTex.magFilter = THREE.LinearFilter
 
-  // Create image materials
-  const imageMaterials = useMemo(() => {
-    return textures.map(
-      (texture, index) =>
-        new THREE.ShaderMaterial({
-          vertexShader: imageVertexShader,
-          fragmentShader: imageFragmentShader,
-          uniforms: {
-            uTexture: { value: texture },
-            uDisplacement: { value: renderTargets[0].texture },
-            uViewportSize: { value: new THREE.Vector2(viewport.width, viewport.height) },
-            uDistortionStrength: { value: settings.distortionStrength },
-            uAberration: { value: settings.aberration },
-            uLightIntensity: { value: settings.lightIntensity },
-            uSpecularPower: { value: settings.specularPower },
-            uResolution: { value: new THREE.Vector2(RESOLUTION, RESOLUTION) },
-            uImageAspect: { value: imageAspectsRef.current[index] },
-            uPlaneAspect: { value: 1.0 },
-          },
-        })
-    )
-  }, [textures, renderTargets, viewport.width, viewport.height])
+    const revealTex = loader.load(revealImage, (tex) => {
+      const img = tex.image as HTMLImageElement
+      if (img) revealImageAspectRef.current = img.naturalWidth / img.naturalHeight
+    })
+    revealTex.minFilter = THREE.LinearFilter
+    revealTex.magFilter = THREE.LinearFilter
 
-  // Track mouse movement (normalized 0-1)
+    return { base: baseTex, reveal: revealTex }
+  }, [baseImage, revealImage])
+
+  // Main material for the mask effect
+  const maskMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      vertexShader: maskVertexShader,
+      fragmentShader: maskFragmentShader,
+      uniforms: {
+        uBaseTexture: { value: textures.base },
+        uRevealTexture: { value: textures.reveal },
+        uDisplacement: { value: renderTargets[0].texture },
+        uDistortionStrength: { value: settings.distortionStrength },
+        uRevealSize: { value: settings.revealSize },
+        uEdgeSoftness: { value: settings.edgeSoftness },
+        uLightIntensity: { value: settings.lightIntensity },
+        uSpecularPower: { value: settings.specularPower },
+        uResolution: { value: new THREE.Vector2(RESOLUTION, RESOLUTION) },
+        uBaseImageAspect: { value: baseImageAspectRef.current },
+        uRevealImageAspect: { value: revealImageAspectRef.current },
+        uPlaneAspect: { value: 1 },
+      },
+    })
+  }, [textures, renderTargets])
+
+  // Track mouse
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current.x = e.clientX / window.innerWidth
@@ -368,35 +356,16 @@ export function RippleEffect({
     }
   }, [])
 
-  // Calculate image layout (moved before useFrame so it's available)
-  const imageLayout = useMemo(() => {
-    const isMobile = size.width < 768
-
-    if (isMobile) {
-      const imageSize = Math.min(viewport.width * 0.85, viewport.height * 0.28)
-      const gap = 0.25
-      const totalHeight = imageSize * 3 + gap * 2
-      const startY = totalHeight / 2 - imageSize / 2
-
-      return images.map((_, i) => ({
-        position: [0, startY - i * (imageSize + gap), 0] as [number, number, number],
-        size: [imageSize, imageSize] as [number, number],
-      }))
+  // Calculate plane size to fill viewport
+  const planeSize = useMemo(() => {
+    return {
+      width: viewport.width,
+      height: viewport.height,
+      aspect: viewport.width / viewport.height
     }
+  }, [viewport.width, viewport.height])
 
-    const gap = 0.35
-    const maxImageSize = (viewport.width - gap * 4) / 3
-    const imageSize = Math.min(maxImageSize, viewport.height * 0.7)
-    const totalWidth = imageSize * 3 + gap * 2
-    const startX = -totalWidth / 2 + imageSize / 2
-
-    return images.map((_, i) => ({
-      position: [startX + i * (imageSize + gap), 0, 0] as [number, number, number],
-      size: [imageSize, imageSize] as [number, number],
-    }))
-  }, [viewport, images, size.width])
-
-  // Main animation loop
+  // Animation loop
   useFrame(() => {
     if (!quadMeshRef.current) return
 
@@ -406,7 +375,7 @@ export function RippleEffect({
     const velocity = Math.sqrt(dx * dx + dy * dy)
     mouseVelocityRef.current = velocity
 
-    // Update all uniforms
+    // Update fluid uniforms
     fluidUpdateMaterial.uniforms.uViscosity.value = settings.viscosity
     fluidUpdateMaterial.uniforms.uDecay.value = settings.decay
     fluidUpdateMaterial.uniforms.uRadius.value = settings.scale
@@ -415,12 +384,12 @@ export function RippleEffect({
     fluidUpdateMaterial.uniforms.uPrevMouse.value.set(prevMouseRef.current.x, prevMouseRef.current.y)
     fluidUpdateMaterial.uniforms.uMouseVelocity.value = velocity
 
-    // Current ping-pong indices
+    // Ping-pong indices
     const current = pingPongRef.current
     const prev = (current + 2) % 3
     const next = (current + 1) % 3
 
-    // Update fluid simulation (includes ripple injection)
+    // Update fluid simulation
     fluidUpdateMaterial.uniforms.uPrevState.value = renderTargets[prev].texture
     fluidUpdateMaterial.uniforms.uCurrentState.value = renderTargets[current].texture
 
@@ -430,26 +399,21 @@ export function RippleEffect({
     gl.render(offscreenScene, offscreenCamera)
     gl.setRenderTarget(null)
 
-    // Update image materials with new displacement and aspect ratios
-    imageMaterials.forEach((mat, index) => {
-      mat.uniforms.uDisplacement.value = renderTargets[next].texture
-      mat.uniforms.uViewportSize.value.set(viewport.width, viewport.height)
-      mat.uniforms.uDistortionStrength.value = settings.distortionStrength
-      mat.uniforms.uAberration.value = settings.aberration
-      mat.uniforms.uLightIntensity.value = settings.lightIntensity
-      mat.uniforms.uSpecularPower.value = settings.specularPower
-      // Update aspect ratios
-      mat.uniforms.uImageAspect.value = imageAspectsRef.current[index]
-      const planeSize = imageLayout[index]?.size
-      if (planeSize) {
-        mat.uniforms.uPlaneAspect.value = planeSize[0] / planeSize[1]
-      }
-    })
+    // Update mask material
+    maskMaterial.uniforms.uDisplacement.value = renderTargets[next].texture
+    maskMaterial.uniforms.uDistortionStrength.value = settings.distortionStrength
+    maskMaterial.uniforms.uRevealSize.value = settings.revealSize
+    maskMaterial.uniforms.uEdgeSoftness.value = settings.edgeSoftness
+    maskMaterial.uniforms.uLightIntensity.value = settings.lightIntensity
+    maskMaterial.uniforms.uSpecularPower.value = settings.specularPower
+    maskMaterial.uniforms.uBaseImageAspect.value = baseImageAspectRef.current
+    maskMaterial.uniforms.uRevealImageAspect.value = revealImageAspectRef.current
+    maskMaterial.uniforms.uPlaneAspect.value = planeSize.aspect
 
     // Advance ping-pong
     pingPongRef.current = next
 
-    // Store previous mouse position
+    // Store previous mouse
     prevMouseRef.current.x = mouseRef.current.x
     prevMouseRef.current.y = mouseRef.current.y
   })
@@ -460,19 +424,18 @@ export function RippleEffect({
       renderTargets.forEach(rt => rt.dispose())
       quadGeometry.dispose()
       fluidUpdateMaterial.dispose()
-      imageMaterials.forEach(mat => mat.dispose())
-      textures.forEach(tex => tex.dispose())
+      maskMaterial.dispose()
+      textures.base.dispose()
+      textures.reveal.dispose()
     }
   }, [])
 
   return (
-    <>
-      {imageMaterials.map((material, i) => (
-        <mesh key={i} position={imageLayout[i].position}>
-          <planeGeometry args={[imageLayout[i].size[0], imageLayout[i].size[1], 1, 1]} />
-          <primitive object={material} attach="material" />
-        </mesh>
-      ))}
-    </>
+    <mesh>
+      <planeGeometry args={[planeSize.width, planeSize.height, 1, 1]} />
+      <primitive object={maskMaterial} attach="material" />
+    </mesh>
   )
 }
+
+export default MaskCursorEffect
