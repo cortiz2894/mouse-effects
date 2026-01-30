@@ -16,7 +16,7 @@ export default function ImageFollowCursorPage() {
       imageWidth: { value: 200, min: 50, max: 400, step: 10 },
       imageHeight: { value: 260, min: 50, max: 400, step: 10 },
       minDistance: { value: 150, min: 50, max: 300, step: 10 },
-    }),
+    }, { collapsed: true }),
   })
 
   return (

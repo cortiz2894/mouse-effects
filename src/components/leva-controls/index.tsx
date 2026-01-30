@@ -60,7 +60,7 @@ const LevaControls = () => {
             accent2: 'rgba(255, 255, 255, 0.6)',
             accent3: 'rgba(255, 255, 255, 0.4)',
             highlight1: 'rgba(255, 255, 255, 0.1)',
-            highlight2: 'rgba(255, 255, 255, 0.15)',
+            highlight2: 'rgba(255, 255, 255, 0.5)',
             highlight3: 'rgba(255, 255, 255, 0.05)',
             vivid1: 'rgba(255, 255, 255, 0.9)',
             folderWidgetColor: 'rgba(255, 255, 255, 0.5)',

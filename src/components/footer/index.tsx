@@ -2,13 +2,12 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Twitter, Instagram, Youtube, Github } from 'lucide-react'
+import { Twitter, Youtube, Github } from 'lucide-react'
 
 const socialLinks = [
-  { icon: Twitter, href: 'https://twitter.com', label: 'Twitter' },
-  { icon: Instagram, href: 'https://instagram.com', label: 'Instagram' },
-  { icon: Youtube, href: 'https://youtube.com', label: 'YouTube' },
-  { icon: Github, href: 'https://github.com', label: 'GitHub' },
+  { icon: Twitter, href: 'https://x.com/cortiz2894', label: 'X' },
+  { icon: Youtube, href: 'https://www.youtube.com/@cortizdev', label: 'YouTube' },
+  { icon: Github, href: 'https://github.com/cortiz2894', label: 'GitHub' },
 ]
 
 const Footer = () => {

@@ -1,36 +1,167 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mouse Effects | Creative Experiments
 
-## Getting Started
+A collection of interactive mouse effects built with Next.js, Three.js, and GSAP. This project showcases creative cursor interactions including water ripple distortions, image trails, and liquid mask reveals.
 
-First, run the development server:
+![Mouse Effects Preview](https://img.shields.io/badge/Next.js-16.1-black?style=flat-square&logo=next.js)
+![Three.js](https://img.shields.io/badge/Three.js-0.182-black?style=flat-square&logo=three.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
+
+## ✨ Effects Included
+
+### 1. Water Ripple Distortion
+
+A WebGL shader effect that creates realistic water ripples on images as you move your cursor. Features include:
+- Fluid simulation with ping-pong buffers
+- Chromatic aberration
+- Specular lighting highlights
+- Configurable viscosity and decay
+
+### 2. Image Follow Cursor
+An engaging effect where images appear and animate along the cursor path using GSAP. Features include:
+- Smooth reveal animations
+- Trail effect with multiple images
+- Configurable image size and spawn distance
+- Exclusion zones support
+
+### 3. Liquid Mask Reveal
+A WebGL effect that reveals a hidden image through a liquid distortion mask. Features include:
+- Two-layer image composition
+- Fluid-based mask generation
+- Adjustable reveal size and edge softness
+- Real-time parameter controls
+
+## 🛠 Tech Stack
+
+- **Framework:** Next.js 16.1 (App Router)
+- **3D/WebGL:** Three.js, React Three Fiber
+- **Animation:** GSAP
+- **Styling:** Tailwind CSS 4
+- **Controls:** Leva (GUI controls)
+- **Icons:** Lucide React
+- **Language:** TypeScript
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm (recommended) or npm
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Clone the repository
+git clone https://github.com/cortiz2894/mouse-effects.git
+
+# Navigate to the project
+cd mouse-effects
+
+# Install dependencies
+pnpm install
+
+# Start the development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the effects.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── page.tsx                    # Water Distortion effect
+│   ├── image-follow-cursor/
+│   │   └── page.tsx                # Image Follow effect
+│   ├── mask-cursor/
+│   │   ├── page.tsx                # Mask Reveal effect
+│   │   └── canvas.tsx              # Three.js canvas wrapper
+│   ├── layout.tsx                  # Root layout with Header/Footer
+│   └── globals.css                 # Global styles
+├── components/
+│   ├── water-distortion/
+│   │   ├── ripple-effect.tsx       # WebGL ripple shader
+│   │   └── water-distortion-canvas.tsx
+│   ├── image-follow-cursor/
+│   │   └── index.tsx               # GSAP cursor effect
+│   ├── mask-cursor/
+│   │   └── index.tsx               # WebGL mask shader
+│   ├── header/
+│   │   └── index.tsx               # Navigation header
+│   ├── footer/
+│   │   └── index.tsx               # Footer with social links
+│   ├── page-header/
+│   │   └── index.tsx               # Reusable page title
+│   └── leva-controls/
+│       └── index.tsx               # Custom Leva wrapper
+└── public/
+    └── [images]                    # Effect images
+```
 
-## Learn More
+## ⚙️ Configuration
 
-To learn more about Next.js, take a look at the following resources:
+Each effect has real-time controls powered by Leva. Click the control buttons in the bottom-right corner to adjust:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Water Distortion
+- **Ripple:** intensity, scale, viscosity, decay
+- **Distortion:** strength, chromatic aberration
+- **Lighting:** intensity, specular power
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Image Follow
+- **Effect:** image width, height, minimum distance
 
-## Deploy on Vercel
+### Mask Reveal
+- **Ripple:** intensity, scale, viscosity, decay
+- **Mask:** reveal size, edge softness, distortion
+- **Lighting:** intensity, specular power
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📜 Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm dev      # Start development server
+pnpm build    # Build for production
+pnpm start    # Start production server
+pnpm lint     # Run ESLint
+```
+
+## 🎨 Customization
+
+### Adding Your Own Images
+
+Place your images in the `public/` folder and update the image paths in each page:
+
+```tsx
+// src/app/page.tsx
+const images = ["/your-image-1.jpg", "/your-image-2.jpg", "/your-image-3.jpg"]
+```
+
+### Modifying Shader Effects
+
+The WebGL shaders are located in:
+- `src/components/water-distortion/ripple-effect.tsx`
+- `src/components/mask-cursor/index.tsx`
+
+Key shader sections:
+- `fluidUpdateShader` - Wave propagation simulation
+- `imageFragmentShader` - Image distortion and lighting
+
+---
+
+## 👨‍💻 Author
+
+**Christian Ortiz** - Creative Developer
+
+## 🔗 Connect with me
+
+- **Portfolio:** [cortiz.dev](https://cortiz.dev)
+- **YouTube:** [@cortizdev](https://youtube.com/@cortizdev)
+- **X (Twitter):** [@cortiz2894](https://twitter.com/cortiz2894)
+- **LinkedIn:** [Christian Daniel Ortiz](https://linkedin.com/in/christian-daniel-ortiz)
+
+## 📬 Contact
+
+For inquiries, collaborations or questions: **cortiz2894@gmail.com**
+
+---
+
+⭐ If you found this useful, consider subscribing to my [YouTube channel](https://youtube.com/@cortizdev) for more creative development content!

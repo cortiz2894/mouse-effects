@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Mouse Effects | Creative Experiments",
   description: "Collection of creative mouse interaction effects",
+  icons: {
+    icon: "/logo-favicon.ico",
+  },
 };
 
 export default function RootLayout({
