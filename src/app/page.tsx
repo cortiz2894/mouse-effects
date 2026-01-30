@@ -9,13 +9,13 @@ const WaterDistortionCanvas = dynamic(
   { ssr: false }
 )
 
-const images = ["/art-1.png", "/art-2.jpg", "/art-3.jpg"]
+const images = ["/art-2.jpg", "/art-7.png", "/art-1.png"]
 
 export default function Home() {
   const settings = useControls({
     Ripple: folder({
-      intensity: { value: 0.64, min: 0, max: 1, step: 0.01 },
-      scale: { value: 0.05, min: 0.05, max: 0.8, step: 0.01 },
+      intensity: { value: 0.24, min: 0, max: 1, step: 0.01 },
+      scale: { value: 0.03, min: 0.005, max: 0.1, step: 0.001 },
       viscosity: { value: 0.89, min: 0.5, max: 0.99, step: 0.01 },
       decay: { value: 0.98, min: 0.8, max: 0.99, step: 0.01 },
     }),
@@ -24,7 +24,7 @@ export default function Home() {
       aberration: { value: 0.003, min: 0, max: 0.02, step: 0.001 },
     }),
     Lighting: folder({
-      lightIntensity: { value: 0.25, min: 0, max: 1, step: 0.01 },
+      lightIntensity: { value: 0.09, min: 0, max: 0.3, step: 0.001 },
       specularPower: { value: 8.1, min: 1, max: 10, step: 0.1 },
     }),
   })

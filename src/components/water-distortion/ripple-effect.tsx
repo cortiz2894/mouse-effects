@@ -107,9 +107,23 @@ const imageFragmentShader = `
   uniform float uLightIntensity;
   uniform float uSpecularPower;
   uniform vec2 uResolution;
+  uniform float uImageAspect;
+  uniform float uPlaneAspect;
 
   varying vec2 vUv;
   varying vec2 vScreenUv;
+
+  // Cover fit - maintains aspect ratio while filling the plane
+  vec2 coverUv(vec2 uv, float imageAspect, float planeAspect) {
+    vec2 ratio = vec2(
+      min(planeAspect / imageAspect, 1.0),
+      min(imageAspect / planeAspect, 1.0)
+    );
+    return vec2(
+      uv.x * ratio.x + (1.0 - ratio.x) * 0.5,
+      uv.y * ratio.y + (1.0 - ratio.y) * 0.5
+    );
+  }
 
   vec3 calculateNormal(vec2 uv, float strength) {
     vec2 texel = 1.0 / uResolution;
@@ -128,15 +142,21 @@ const imageFragmentShader = `
   }
 
   void main() {
+    // Apply aspect ratio correction (cover fit)
+    vec2 coveredUv = coverUv(vUv, uImageAspect, uPlaneAspect);
+
     // Get displacement value
     float displacement = texture2D(uDisplacement, vScreenUv).r;
 
     // Calculate normal for lighting and refraction
     vec3 normal = calculateNormal(vScreenUv, 50.0);
 
+    // Calculate how much the normal deviates from flat (used to mask lighting)
+    float normalDeviation = length(normal.xy);
+
     // Refraction-based distortion using normal
     vec2 refraction = normal.xy * uDistortionStrength;
-    vec2 distortedUv = vUv + refraction;
+    vec2 distortedUv = coveredUv + refraction;
 
     // Clamp UVs
     distortedUv = clamp(distortedUv, 0.001, 0.999);
@@ -150,20 +170,24 @@ const imageFragmentShader = `
 
     vec3 color = vec3(colorR.r, colorG.g, colorB.b);
 
-    // Specular lighting (water highlights)
+    // Only apply lighting where there are actual ripples (normal deviation > 0)
+    // Use smoothstep to create a soft threshold
+    float rippleMask = smoothstep(0.01, 0.1, normalDeviation);
+
+    // Specular lighting (water highlights) - only on ripples
     vec3 lightDir = normalize(vec3(0.5, 0.5, 1.0));
     vec3 viewDir = vec3(0.0, 0.0, 1.0);
     vec3 halfDir = normalize(lightDir + viewDir);
 
     float specular = pow(max(dot(normal, halfDir), 0.0), uSpecularPower);
-    specular *= uLightIntensity;
+    specular *= uLightIntensity * rippleMask;
 
-    // Add specular highlight
+    // Add specular highlight only on ripples
     color += vec3(specular);
 
-    // Subtle fresnel effect for depth
+    // Subtle fresnel effect - only on ripples
     float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 2.0);
-    color += vec3(fresnel * uLightIntensity * 0.1);
+    color += vec3(fresnel * uLightIntensity * 0.1 * rippleMask);
 
     gl_FragColor = vec4(color, 1.0);
   }
@@ -269,11 +293,20 @@ export function RippleEffect({
     }
   }, [quadGeometry, fluidUpdateMaterial, offscreenScene])
 
-  // Load textures
+  // Track image aspect ratios
+  const imageAspectsRef = useRef<number[]>(images.map(() => 1))
+
+  // Load textures and get their aspect ratios
   const textures = useMemo(() => {
     const loader = new THREE.TextureLoader()
-    return images.map((src) => {
-      const tex = loader.load(src)
+    return images.map((src, index) => {
+      const tex = loader.load(src, (loadedTex) => {
+        // Get image dimensions when loaded
+        const image = loadedTex.image as HTMLImageElement
+        if (image) {
+          imageAspectsRef.current[index] = image.naturalWidth / image.naturalHeight
+        }
+      })
       tex.minFilter = THREE.LinearFilter
       tex.magFilter = THREE.LinearFilter
       return tex
@@ -283,7 +316,7 @@ export function RippleEffect({
   // Create image materials
   const imageMaterials = useMemo(() => {
     return textures.map(
-      (texture) =>
+      (texture, index) =>
         new THREE.ShaderMaterial({
           vertexShader: imageVertexShader,
           fragmentShader: imageFragmentShader,
@@ -296,6 +329,8 @@ export function RippleEffect({
             uLightIntensity: { value: settings.lightIntensity },
             uSpecularPower: { value: settings.specularPower },
             uResolution: { value: new THREE.Vector2(RESOLUTION, RESOLUTION) },
+            uImageAspect: { value: imageAspectsRef.current[index] },
+            uPlaneAspect: { value: 1.0 },
           },
         })
     )
@@ -323,6 +358,34 @@ export function RippleEffect({
       window.removeEventListener("touchmove", handleTouchMove)
     }
   }, [])
+
+  // Calculate image layout (moved before useFrame so it's available)
+  const imageLayout = useMemo(() => {
+    const isMobile = size.width < 768
+
+    if (isMobile) {
+      const imageSize = Math.min(viewport.width * 0.85, viewport.height * 0.28)
+      const gap = 0.25
+      const totalHeight = imageSize * 3 + gap * 2
+      const startY = totalHeight / 2 - imageSize / 2
+
+      return images.map((_, i) => ({
+        position: [0, startY - i * (imageSize + gap), 0] as [number, number, number],
+        size: [imageSize, imageSize] as [number, number],
+      }))
+    }
+
+    const gap = 0.35
+    const maxImageSize = (viewport.width - gap * 4) / 3
+    const imageSize = Math.min(maxImageSize, viewport.height * 0.7)
+    const totalWidth = imageSize * 3 + gap * 2
+    const startX = -totalWidth / 2 + imageSize / 2
+
+    return images.map((_, i) => ({
+      position: [startX + i * (imageSize + gap), 0, 0] as [number, number, number],
+      size: [imageSize, imageSize] as [number, number],
+    }))
+  }, [viewport, images, size.width])
 
   // Main animation loop
   useFrame(() => {
@@ -358,14 +421,20 @@ export function RippleEffect({
     gl.render(offscreenScene, offscreenCamera)
     gl.setRenderTarget(null)
 
-    // Update image materials with new displacement
-    imageMaterials.forEach((mat) => {
+    // Update image materials with new displacement and aspect ratios
+    imageMaterials.forEach((mat, index) => {
       mat.uniforms.uDisplacement.value = renderTargets[next].texture
       mat.uniforms.uViewportSize.value.set(viewport.width, viewport.height)
       mat.uniforms.uDistortionStrength.value = settings.distortionStrength
       mat.uniforms.uAberration.value = settings.aberration
       mat.uniforms.uLightIntensity.value = settings.lightIntensity
       mat.uniforms.uSpecularPower.value = settings.specularPower
+      // Update aspect ratios
+      mat.uniforms.uImageAspect.value = imageAspectsRef.current[index]
+      const planeSize = imageLayout[index]?.size
+      if (planeSize) {
+        mat.uniforms.uPlaneAspect.value = planeSize[0] / planeSize[1]
+      }
     })
 
     // Advance ping-pong
@@ -375,34 +444,6 @@ export function RippleEffect({
     prevMouseRef.current.x = mouseRef.current.x
     prevMouseRef.current.y = mouseRef.current.y
   })
-
-  // Calculate image layout
-  const imageLayout = useMemo(() => {
-    const isMobile = size.width < 768
-
-    if (isMobile) {
-      const imageSize = Math.min(viewport.width * 0.85, viewport.height * 0.28)
-      const gap = 0.25
-      const totalHeight = imageSize * 3 + gap * 2
-      const startY = totalHeight / 2 - imageSize / 2
-
-      return images.map((_, i) => ({
-        position: [0, startY - i * (imageSize + gap), 0] as [number, number, number],
-        size: [imageSize, imageSize] as [number, number],
-      }))
-    }
-
-    const gap = 0.35
-    const maxImageSize = (viewport.width - gap * 4) / 3
-    const imageSize = Math.min(maxImageSize, viewport.height * 0.7)
-    const totalWidth = imageSize * 3 + gap * 2
-    const startX = -totalWidth / 2 + imageSize / 2
-
-    return images.map((_, i) => ({
-      position: [startX + i * (imageSize + gap), 0, 0] as [number, number, number],
-      size: [imageSize, imageSize] as [number, number],
-    }))
-  }, [viewport, images, size.width])
 
   // Cleanup
   useEffect(() => {
