@@ -79,23 +79,6 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the effects.
 
-## ⚙️ Configuration
-
-Each effect has real-time controls powered by Leva. Click the control buttons in the bottom-right corner to adjust:
-
-### Water Distortion
-- **Ripple:** intensity, scale, viscosity, decay
-- **Distortion:** strength, chromatic aberration
-- **Lighting:** intensity, specular power
-
-### Image Follow
-- **Effect:** image width, height, minimum distance
-
-### Mask Reveal
-- **Ripple:** intensity, scale, viscosity, decay
-- **Mask:** reveal size, edge softness, distortion
-- **Lighting:** intensity, specular power
-
 ## 👨‍💻 Author
 
 **Christian Ortiz** - Creative Developer
