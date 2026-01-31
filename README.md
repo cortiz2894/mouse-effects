@@ -79,39 +79,6 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the effects.
 
-## 📁 Project Structure
-
-```
-src/
-├── app/
-│   ├── page.tsx                    # Water Distortion effect
-│   ├── image-follow-cursor/
-│   │   └── page.tsx                # Image Follow effect
-│   ├── mask-cursor/
-│   │   ├── page.tsx                # Mask Reveal effect
-│   │   └── canvas.tsx              # Three.js canvas wrapper
-│   ├── layout.tsx                  # Root layout with Header/Footer
-│   └── globals.css                 # Global styles
-├── components/
-│   ├── water-distortion/
-│   │   ├── ripple-effect.tsx       # WebGL ripple shader
-│   │   └── water-distortion-canvas.tsx
-│   ├── image-follow-cursor/
-│   │   └── index.tsx               # GSAP cursor effect
-│   ├── mask-cursor/
-│   │   └── index.tsx               # WebGL mask shader
-│   ├── header/
-│   │   └── index.tsx               # Navigation header
-│   ├── footer/
-│   │   └── index.tsx               # Footer with social links
-│   ├── page-header/
-│   │   └── index.tsx               # Reusable page title
-│   └── leva-controls/
-│       └── index.tsx               # Custom Leva wrapper
-└── public/
-    └── [images]                    # Effect images
-```
-
 ## ⚙️ Configuration
 
 Each effect has real-time controls powered by Leva. Click the control buttons in the bottom-right corner to adjust:
@@ -128,38 +95,6 @@ Each effect has real-time controls powered by Leva. Click the control buttons in
 - **Ripple:** intensity, scale, viscosity, decay
 - **Mask:** reveal size, edge softness, distortion
 - **Lighting:** intensity, specular power
-
-## 📜 Scripts
-
-```bash
-pnpm dev      # Start development server
-pnpm build    # Build for production
-pnpm start    # Start production server
-pnpm lint     # Run ESLint
-```
-
-## 🎨 Customization
-
-### Adding Your Own Images
-
-Place your images in the `public/` folder and update the image paths in each page:
-
-```tsx
-// src/app/page.tsx
-const images = ["/your-image-1.jpg", "/your-image-2.jpg", "/your-image-3.jpg"]
-```
-
-### Modifying Shader Effects
-
-The WebGL shaders are located in:
-- `src/components/water-distortion/ripple-effect.tsx`
-- `src/components/mask-cursor/index.tsx`
-
-Key shader sections:
-- `fluidUpdateShader` - Wave propagation simulation
-- `imageFragmentShader` - Image distortion and lighting
-
----
 
 ## 👨‍💻 Author
 
