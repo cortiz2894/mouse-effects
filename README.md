@@ -12,7 +12,7 @@ A collection of interactive mouse effects built with Next.js, Three.js, and GSAP
 
 A WebGL shader effect that creates realistic water ripples on images as you move your cursor.
 
-<video src="public/videos/MouseRipple.mp4" width="100%" autoplay loop muted playsinline></video>
+https://github.com/user-attachments/assets/fcfb303b-f8a1-4e41-9c84-e98d6f1a0334
 
 **Features:**
 - Fluid simulation with ping-pong buffers
@@ -24,7 +24,7 @@ A WebGL shader effect that creates realistic water ripples on images as you move
 
 An engaging effect where images appear and animate along the cursor path using GSAP.
 
-<video src="public/videos/ImageFollow.mp4" width="100%" autoplay loop muted playsinline></video>
+https://github.com/user-attachments/assets/6d4057c6-64ed-46c2-b8d8-345eada5a14f
 
 **Features:**
 - Smooth reveal animations
@@ -32,11 +32,11 @@ An engaging effect where images appear and animate along the cursor path using G
 - Configurable image size and spawn distance
 - Exclusion zones support
 
-### 3. Liquid Mask Reveal
+### 3. Cursor Mask Reveal
 
 A WebGL effect that reveals a hidden image through a liquid distortion mask.
 
-<video src="public/videos/MaskReveal.mp4" width="100%" autoplay loop muted playsinline></video>
+https://github.com/user-attachments/assets/81b7f46b-d52a-415e-9e14-949f6dc79276
 
 **Features:**
 - Two-layer image composition
