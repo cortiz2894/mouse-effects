@@ -1,4 +1,4 @@
-# Mouse Effects | Creative Experiments
+# Mouse Effects
 
 A collection of interactive mouse effects built with Next.js, Three.js, and GSAP. This project showcases creative cursor interactions including water ripple distortions, image trails, and liquid mask reveals.
 
@@ -6,25 +6,39 @@ A collection of interactive mouse effects built with Next.js, Three.js, and GSAP
 ![Three.js](https://img.shields.io/badge/Three.js-0.182-black?style=flat-square&logo=three.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
 
-## ✨ Effects Included
+## ✨ Effects
 
 ### 1. Water Ripple Distortion
 
-A WebGL shader effect that creates realistic water ripples on images as you move your cursor. Features include:
+A WebGL shader effect that creates realistic water ripples on images as you move your cursor.
+
+<video src="public/videos/MouseRipple.mp4" width="100%" autoplay loop muted playsinline></video>
+
+**Features:**
 - Fluid simulation with ping-pong buffers
 - Chromatic aberration
 - Specular lighting highlights
 - Configurable viscosity and decay
 
 ### 2. Image Follow Cursor
-An engaging effect where images appear and animate along the cursor path using GSAP. Features include:
+
+An engaging effect where images appear and animate along the cursor path using GSAP.
+
+<video src="public/videos/ImageFollow.mp4" width="100%" autoplay loop muted playsinline></video>
+
+**Features:**
 - Smooth reveal animations
 - Trail effect with multiple images
 - Configurable image size and spawn distance
 - Exclusion zones support
 
 ### 3. Liquid Mask Reveal
-A WebGL effect that reveals a hidden image through a liquid distortion mask. Features include:
+
+A WebGL effect that reveals a hidden image through a liquid distortion mask.
+
+<video src="public/videos/MaskReveal.mp4" width="100%" autoplay loop muted playsinline></video>
+
+**Features:**
 - Two-layer image composition
 - Fluid-based mask generation
 - Adjustable reveal size and edge softness
@@ -161,7 +175,6 @@ Key shader sections:
 ## 📬 Contact
 
 For inquiries, collaborations or questions: **cortiz2894@gmail.com**
-
 ---
 
 ⭐ If you found this useful, consider subscribing to my [YouTube channel](https://youtube.com/@cortizdev) for more creative development content!
