@@ -12,7 +12,7 @@ A collection of interactive mouse effects built with Next.js, Three.js, and GSAP
 
 A WebGL shader effect that creates realistic water ripples on images as you move your cursor.
 
-<video src="public/videos/MouseRipple.mp4" width="100%" autoplay loop muted playsinline></video>
+https://github.com/user-attachments/assets/fcfb303b-f8a1-4e41-9c84-e98d6f1a0334
 
 **Features:**
 - Fluid simulation with ping-pong buffers
@@ -24,7 +24,7 @@ A WebGL shader effect that creates realistic water ripples on images as you move
 
 An engaging effect where images appear and animate along the cursor path using GSAP.
 
-<video src="public/videos/ImageFollow.mp4" width="100%" autoplay loop muted playsinline></video>
+https://github.com/user-attachments/assets/6d4057c6-64ed-46c2-b8d8-345eada5a14f
 
 **Features:**
 - Smooth reveal animations
@@ -32,11 +32,11 @@ An engaging effect where images appear and animate along the cursor path using G
 - Configurable image size and spawn distance
 - Exclusion zones support
 
-### 3. Liquid Mask Reveal
+### 3. Cursor Mask Reveal
 
 A WebGL effect that reveals a hidden image through a liquid distortion mask.
 
-<video src="public/videos/MaskReveal.mp4" width="100%" autoplay loop muted playsinline></video>
+https://github.com/user-attachments/assets/81b7f46b-d52a-415e-9e14-949f6dc79276
 
 **Features:**
 - Two-layer image composition
@@ -78,88 +78,6 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the effects.
-
-## 📁 Project Structure
-
-```
-src/
-├── app/
-│   ├── page.tsx                    # Water Distortion effect
-│   ├── image-follow-cursor/
-│   │   └── page.tsx                # Image Follow effect
-│   ├── mask-cursor/
-│   │   ├── page.tsx                # Mask Reveal effect
-│   │   └── canvas.tsx              # Three.js canvas wrapper
-│   ├── layout.tsx                  # Root layout with Header/Footer
-│   └── globals.css                 # Global styles
-├── components/
-│   ├── water-distortion/
-│   │   ├── ripple-effect.tsx       # WebGL ripple shader
-│   │   └── water-distortion-canvas.tsx
-│   ├── image-follow-cursor/
-│   │   └── index.tsx               # GSAP cursor effect
-│   ├── mask-cursor/
-│   │   └── index.tsx               # WebGL mask shader
-│   ├── header/
-│   │   └── index.tsx               # Navigation header
-│   ├── footer/
-│   │   └── index.tsx               # Footer with social links
-│   ├── page-header/
-│   │   └── index.tsx               # Reusable page title
-│   └── leva-controls/
-│       └── index.tsx               # Custom Leva wrapper
-└── public/
-    └── [images]                    # Effect images
-```
-
-## ⚙️ Configuration
-
-Each effect has real-time controls powered by Leva. Click the control buttons in the bottom-right corner to adjust:
-
-### Water Distortion
-- **Ripple:** intensity, scale, viscosity, decay
-- **Distortion:** strength, chromatic aberration
-- **Lighting:** intensity, specular power
-
-### Image Follow
-- **Effect:** image width, height, minimum distance
-
-### Mask Reveal
-- **Ripple:** intensity, scale, viscosity, decay
-- **Mask:** reveal size, edge softness, distortion
-- **Lighting:** intensity, specular power
-
-## 📜 Scripts
-
-```bash
-pnpm dev      # Start development server
-pnpm build    # Build for production
-pnpm start    # Start production server
-pnpm lint     # Run ESLint
-```
-
-## 🎨 Customization
-
-### Adding Your Own Images
-
-Place your images in the `public/` folder and update the image paths in each page:
-
-```tsx
-// src/app/page.tsx
-const images = ["/your-image-1.jpg", "/your-image-2.jpg", "/your-image-3.jpg"]
-```
-
-### Modifying Shader Effects
-
-The WebGL shaders are located in:
-- `src/components/water-distortion/ripple-effect.tsx`
-- `src/components/mask-cursor/index.tsx`
-
-Key shader sections:
-- `fluidUpdateShader` - Wave propagation simulation
-- `imageFragmentShader` - Image distortion and lighting
-
----
 
 ## 👨‍💻 Author
 
