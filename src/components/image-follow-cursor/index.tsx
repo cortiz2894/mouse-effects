@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
+import './styles.css';
 
 const CursorImageEffect = ({
   triggerRef,
@@ -18,6 +19,7 @@ const CursorImageEffect = ({
   minDistance?: number;
 }) => {
   const lastPosition = useRef<{ x: number; y: number } | null>(null);
+  const imageIndex = useRef(0);
 
   useEffect(() => {
     const triggerElement = triggerRef.current;
@@ -68,10 +70,11 @@ const CursorImageEffect = ({
       imageContainer.style.width = `${imageWidth}px`;
       imageContainer.style.height = `${imageHeight}px`;
 
-      // Select random image
-      const randomImage = images[Math.floor(Math.random() * images.length)];
+      // Select next image in sequence
+      const currentImage = images[imageIndex.current];
+      imageIndex.current = (imageIndex.current + 1) % images.length;
       const imageElement = document.createElement('img');
-      imageElement.src = randomImage;
+      imageElement.src = currentImage;
       imageElement.alt = 'Cursor Effect';
       imageElement.className = 'cursor-image__img';
 
@@ -82,20 +85,18 @@ const CursorImageEffect = ({
       const initialY = -70 * direction.y;
 
       gsap.set(imageContainer, {
-        // clipPath: 'circle(-50% at 50% 50%)',
-        opacity: 0,
         scale: 0,
         x: initialX,
         y: initialY,
+        opacity: 0,
       });
 
       gsap
         .timeline()
         .to(imageContainer, {
-          // clipPath: 'circle(75% at 50% 50%)',
-          scale: 1,
           opacity: 1,
-          duration: 0.6,
+          duration: 0.7,
+          scale: 1,
           ease: 'power3.out'
         })
         .to(
@@ -103,7 +104,7 @@ const CursorImageEffect = ({
           {
             x: 0,
             y: 0,
-            duration: 0.8,
+            duration: 0.6,
             ease: 'power3.out',
           },
           '<',
@@ -111,11 +112,11 @@ const CursorImageEffect = ({
         .to(imageContainer, {
           opacity: 0,
           duration: 0.4,
-          scale: 1.15,
+          scale: 0.3,
           onComplete: () => {
             triggerElement.removeChild(imageContainer);
           },
-        },"<+1");
+        },"<+0.6");
     };
 
     triggerElement.addEventListener('mousemove', handleMouseMove);
