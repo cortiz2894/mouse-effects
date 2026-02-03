@@ -6,6 +6,8 @@ A collection of interactive mouse effects built with Next.js, Three.js, and GSAP
 ![Three.js](https://img.shields.io/badge/Three.js-0.182-black?style=flat-square&logo=three.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
 
+- [Watch the Full Youtube Video](https://www.youtube.com/watch?v=YoSVjQXxSwc)
+
 ## ✨ Effects
 
 ### 1. Water Ripple Distortion
